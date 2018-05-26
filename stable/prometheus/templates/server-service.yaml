@@ -32,6 +32,9 @@ spec:
     - {{ $cidr }}
   {{- end }}
 {{- end }}
+{{- if .Values.thanosSidecar.enabled }}
+  externalTrafficPolicy: Cluster
+{{- end }}
   ports:
     - name: http
       port: {{ .Values.server.service.servicePort }}
@@ -40,6 +43,23 @@ spec:
     {{- if .Values.server.service.nodePort }}
       nodePort: {{ .Values.server.service.nodePort }}
     {{- end }}
+{{- if .Values.thanosSidecar.enabled }}
+    - name: gossip
+      port: 10900
+      protocol: TCP
+      targetPort: cluster
+      nodePort: 30900
+    - name: grpc
+      port: 10901
+      protocol: TCP
+      targetPort: http
+      nodePort: 30901
+    - name: http-sidecar-metrics
+      port: 10902
+      protocol: TCP
+      targetPort: http
+      nodePort: 30902
+{{- end }}
   selector:
     app: {{ template "prometheus.name" . }}
     component: "{{ .Values.server.name }}"

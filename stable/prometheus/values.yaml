@@ -239,6 +239,69 @@ configmapReload:
   ##
   resources: {}
 
+## Deploy thanos sidecar
+##
+thanosSidecar:
+
+  ## Add external_labels in the prometheus.yml config when
+  ## enabling thanos
+  enabled: false
+
+  ## thanos-sidecar container name
+  ##
+  name: thanos-sidecar
+
+  ## thanos-sidecar container image
+  ##
+  image:
+    repository: improbable/thanos
+    tag: v0.1.0-rc.2
+    pullPolicy: IfNotPresent
+
+  logLevel: debug
+
+  ## Additional alertmanager container environment variable
+  ## For instance to add a http_proxy
+  ##
+  extraEnv: {}
+   # S3_BUCKET: <bucket>
+   # S3_ENDPOINT: <api-url>
+   # S3_ACCESS_KEY: <access-key>
+   # S3_SECRET_KEY: <secret-key>
+   # S3_SIGNATURE_VERSION2: true
+
+
+  ## Additional thanos-sidecar container arguments
+  ##
+  extraArgs: {}
+
+  ## Additional thanos-sidecar mounts
+  ##
+  extraConfigmapMounts: []
+
+  ## thanos-sidecar resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+
+  peersService:
+    enabled: false
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the Prometheus server service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    servicePort: 10900
+    type: ClusterIP
+
 initChownData:
   ## If false, data ownership will not be reset at startup
   ## This allows the prometheus-server to be run with an arbitrary user
@@ -652,6 +715,8 @@ server:
     loadBalancerIP: ""
     loadBalancerSourceRanges: []
     servicePort: 80
+
+    ## Set to NodePort when enabling thanos sidecar
     type: ClusterIP
 
   ## Prometheus server pod termination grace period

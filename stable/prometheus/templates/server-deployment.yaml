@@ -28,6 +28,9 @@ spec:
         app: {{ template "prometheus.name" . }}
         component: "{{ .Values.server.name }}"
         release: {{ .Release.Name }}
+      {{- if .Values.thanosSidecar.enabled }}
+        thanos-peer: "true"
+      {{- end }}
     spec:
 {{- if .Values.server.affinity }}
       affinity:
@@ -75,7 +78,47 @@ spec:
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly }}
           {{- end }}
-
+      {{- if .Values.thanosSidecar.enabled }}
+        - name: {{ template "prometheus.name" . }}-{{ .Values.server.name }}-{{ .Values.thanosSidecar.name }}
+          image: "{{ .Values.thanosSidecar.image.repository }}:{{ .Values.thanosSidecar.image.tag }}"
+          imagePullPolicy: "{{ .Values.thanosSidecar.image.pullPolicy }}"
+          args:
+            - sidecar
+            - --log.level={{ .Values.thanosSidecar.logLevel }}
+            - --tsdb.path={{ .Values.server.persistentVolume.mountPath }}
+            - --prometheus.url=http://localhost:9090{{ .Values.server.prefixURL }}
+            - --cluster.address=0.0.0.0:10900
+            - --cluster.peers={{ template "prometheus.name" . }}-thanos-peers.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.thanosSidecar.service.servicePort }}
+          {{- range $key, $value := .Values.thanosSidecar.extraArgs }}
+            - --{{ $key }}={{ $value }}
+          {{- end }}
+          env:
+            {{- range $key, $value := .Values.thanosSidecar.extraEnv }}
+            - name: {{ $key }}
+              value: "{{ $value }}"
+            {{- end }}
+          ports:
+            - containerPort: 10902
+              name: http
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 10900
+              name: cluster
+          resources:
+{{ toYaml .Values.thanosSidecar.resources | indent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+            - name: storage-volume
+              mountPath: {{ .Values.server.persistentVolume.mountPath }}
+              subPath: "{{ .Values.server.persistentVolume.subPath }}"
+          {{- range .Values.thanosSidecar.extraConfigmapMounts }}
+            - name: {{ $.Values.thanosSidecar.name }}-{{ .name }}
+              mountPath: {{ .mountPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+{{- end }}
         - name: {{ template "prometheus.name" . }}-{{ .Values.server.name }}
           image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
           imagePullPolicy: "{{ .Values.server.image.pullPolicy }}"

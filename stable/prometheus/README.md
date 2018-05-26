@@ -273,6 +273,25 @@ Parameter | Description | Default
 `serverFiles.rules` | Prometheus server rules configuration | `{}`
 `serverFiles.prometheus.yml` | Prometheus server scrape configuration | example configuration
 `networkPolicy.enabled` | Enable NetworkPolicy | `false` |
+`thanosSidecar.enabled` | Enable Thanos sidecar | `false` |
+`thanosSidecar.name` | name of Thanos sidecar container | `thanos-sidecar` |
+`thanosSidecar.image.repository` | Thanos container repository | `improbable/thanos` |
+`thanosSidecar.image.tag` | name of Thanos container image tag | `v0.1.0-rc.2` |
+`thanosSidecar.image.pullPolicy` | Thanos container image pull policy | `IfNotPresent` |
+`thanosSidecar.name` | Thanos log level | `debug` |
+`thanosSidecar.extraEnv` | Thanos extra environment variables | `{}` |
+`thanosSidecar.extraArgs` | Thanos extra container args | `{}` |
+`thanosSidecar.extraConfigmapMounts` | Thanos extra config map mounts | `[]` |
+`thanosSidecar.resources` | Thanos resources | `{}` |
+`thanosSidecar.peersService.enabled` | Thanos peers service availibility | `false` |
+`thanosSidecar.peersService.service.annotations` | Thanos peers service annotations | `{}` |
+`thanosSidecar.peersService.service.labels` | Thanos peers service labels | `{}` |
+`thanosSidecar.peersService.service.clusterIP` | Thanos peers service cluster ip | `""` |
+`thanosSidecar.peersService.service.externalIPs` | Thanos peers service cluster ip | `[]` |
+`thanosSidecar.peersService.service.loadBalancerIP` | Thanos peers service load balancer ip | `""` |
+`thanosSidecar.peersService.service.loadBalancerSourceRanges` | Thanos peers service load balancer source ranges | `[]` |
+`thanosSidecar.peersService.service.servicePort` | Thanos peers service port | `10900` |
+`thanosSidecar.peersService.service.type` | Thanos peers service type | `ClusterIP` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -345,3 +364,59 @@ implements the Kubernetes NetworkPolicy spec, and set `networkPolicy.enabled` to
 
 If NetworkPolicy is enabled for Prometheus' scrape targets, you may also need
 to manually create a networkpolicy which allows it.
+
+### Thanos sidecar deployment
+
+
+Thanos is a set of components that can be composed into a highly available metric system with unlimited storage capacity. It can be added seamlessly on top of existing Prometheus deployments and leverages the Prometheus 2.0 storage format to cost-efficiently store historical metric data in any object storage while retaining fast query latencies. Additionally, it provides a global query view across all Prometheus installations and can merge data from Prometheus HA pairs on the fly.
+
+https://github.com/improbable-eng/thanos
+
+
+Example of parameters for enabling Thanos sidecar and peers service:
+
+
+```yaml
+server:
+  service:
+    type: NodePort
+    nodePort: 30000
+
+  global:
+    ## How frequently to scrape targets by default
+    ##
+    scrape_interval: 1m
+    ## How long until a scrape request times out
+    ##
+    scrape_timeout: 10s
+    ## How frequently to evaluate rules
+    ##
+    evaluation_interval: 1m
+
+    external_labels:
+      monitor: prometheus
+      replica: 1
+
+  retention: 2d
+
+
+thanosSidecar:
+  enabled: true
+
+  image:
+    repository: improbable/thanos
+    tag: v0.1.0-rc.2
+
+
+  peersService:
+    enabled: true
+
+  extraEnv:
+   S3_BUCKET: xxx
+   S3_ENDPOINT: s3.eu-west-1.amazonaws.com
+   S3_ACCESS_KEY: xxx
+   S3_SECRET_KEY: xxx
+   S3_SIGNATURE_VERSION2: true
+```
+
+

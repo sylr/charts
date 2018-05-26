@@ -1,0 +1,50 @@
+{{- if .Values.thanosSidecar.peersService.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.thanosSidecar.service.annotations }}
+  annotations:
+{{ toYaml .Values.thanosSidecar.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    app: {{ template "prometheus.name" . }}-thanos-peers
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: "{{ .Values.thanosSidecar.name }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+{{- if .Values.thanosSidecar.service.labels }}
+{{ toYaml .Values.thanosSidecar.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "prometheus.name" . }}-thanos-peers
+spec:
+{{- if .Values.thanosSidecar.service.clusterIP }}
+  clusterIP: {{ .Values.thanosSidecar.service.clusterIP }}
+{{- end }}
+{{- if .Values.thanosSidecar.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.thanosSidecar.service.externalIPs | indent 4 }}
+{{- end }}
+{{- if .Values.thanosSidecar.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.thanosSidecar.service.loadBalancerIP }}
+{{- end }}
+{{- if .Values.thanosSidecar.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+  {{- range $cidr := .Values.thanosSidecar.service.loadBalancerSourceRanges }}
+    - {{ $cidr }}
+  {{- end }}
+{{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.thanosSidecar.service.servicePort }}
+      protocol: TCP
+      targetPort: cluster
+    {{- if .Values.thanosSidecar.service.nodePort }}
+      nodePort: {{ .Values.thanosSidecar.service.nodePort }}
+    {{- end }}
+  selector:
+    app: {{ template "prometheus.name" . }}
+    release: {{ .Release.Name }}
+    thanos-peer: "true"
+  type: "{{ .Values.thanosSidecar.service.type }}"
+{{- end }}
