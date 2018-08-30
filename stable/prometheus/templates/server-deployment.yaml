@@ -88,7 +88,10 @@ spec:
             - --tsdb.path={{ .Values.server.persistentVolume.mountPath }}
             - --prometheus.url=http://localhost:9090{{ .Values.server.prefixURL }}
             - --cluster.address=0.0.0.0:10900
+            - --grpc-address=0.0.0.0:10901
+            {{- if .Values.thanosSidecar.peersService.enabled }}
             - --cluster.peers={{ template "prometheus.name" . }}-thanos-peers.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.thanosSidecar.service.servicePort }}
+            {{- end }}
           {{- range $key, $value := .Values.thanosSidecar.extraArgs }}
             - --{{ $key }}={{ $value }}
           {{- end }}
