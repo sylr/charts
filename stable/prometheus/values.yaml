@@ -549,7 +549,7 @@ server:
 
   ## Additional Prometheus server container arguments
   ##
-  extraArgs: {}
+  extraArgs: []
 
   ## Additional Prometheus server hostPath mounts
   ##
