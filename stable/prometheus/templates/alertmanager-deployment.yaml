@@ -49,8 +49,8 @@ spec:
           args:
             - --config.file=/etc/config/alertmanager.yml
             - --storage.path={{ .Values.alertmanager.persistentVolume.mountPath }}
-          {{- range $key, $value := .Values.alertmanager.extraArgs }}
-            - --{{ $key }}={{ $value }}
+          {{- range $value := .Values.alertmanager.extraArgs }}
+            - {{ $value }}
           {{- end }}
 
           ports:
