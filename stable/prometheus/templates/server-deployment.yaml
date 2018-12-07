@@ -137,9 +137,6 @@ spec:
           {{- range $value := .Values.server.extraArgs }}
             - {{ $value }}
           {{- end }}
-          {{- if .Values.server.baseURL }}
-            - --web.external-url={{ .Values.server.baseURL }}
-          {{- end }}
           {{- if .Values.server.enableAdminApi }}
             - --web.enable-admin-api
           {{- end }}
